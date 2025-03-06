@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Alan Adı Güncelle - Alan Adı Takip Sistemi{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-edit me-2"></i>Alan Adı Güncelle</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('update_domain', domain_id=domain.id) }}">
+                    <div class="mb-3">
+                        <label for="domain_name" class="form-label">Alan Adı</label>
+                        <input type="text" class="form-control" id="domain_name" value="{{ domain.domain_name }}" readonly>
+                        <div class="form-text">Alan adı değiştirilemez. Farklı bir alan adı için yeni kayıt ekleyin.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="registrar" class="form-label">Kayıt Firması</label>
+                        <input type="text" class="form-control" id="registrar" name="registrar" value="{{ domain.registrar }}" required>
+                        <div class="form-text">Alan adının kayıtlı olduğu firmayı girin.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="expiry_date" class="form-label">Bitiş Tarihi</label>
+                        <input type="text" class="form-control" id="expiry_date" value="{% if domain.expiry_date %}{{ domain.expiry_date.strftime('%d.%m.%Y') }}{% else %}Bilinmiyor{% endif %}" readonly>
+                        <div class="form-text">Bitiş tarihi otomatik olarak güncellenir.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Durum</label>
+                        <input type="text" class="form-control" id="status" value="{{ domain.status }}" readonly>
+                        <div class="form-text">Durum bilgisi otomatik olarak güncellenir.</div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Güncelle</button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

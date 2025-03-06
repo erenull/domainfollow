@@ -1,0 +1,228 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Alan Adı Detayları{% endblock %}
+{% block page_title %}Alan Adı Detayları: {{ domain.domain_name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-globe me-2"></i>Alan Adı Bilgileri
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="domain-icon mb-3" style="font-size: 3rem; color: #0d6efd;">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h4>{{ domain.domain_name }}</h4>
+                    <a href="http://{{ domain.domain_name }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-external-link-alt me-1"></i>Ziyaret Et
+                    </a>
+                </div>
+                
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Alan Adı ID</th>
+                        <td>{{ domain.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Sahibi</th>
+                        <td>
+                            <a href="{{ url_for('admin_user_detail', user_id=domain.user_id) }}">
+                                {{ domain.user.username }}
+                                {% if domain.user.is_admin %}
+                                <span class="badge bg-success">Admin</span>
+                                {% endif %}
+                                {% if domain.user.is_banned %}
+                                <span class="badge bg-danger">Banlı</span>
+                                {% endif %}
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Eklenme Tarihi</th>
+                        <td>{{ domain.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Kayıt Firması</th>
+                        <td>{{ domain.registrar or 'Bilinmiyor' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Kayıt Tarihi</th>
+                        <td>
+                            {% if domain.registration_date %}
+                            {{ domain.registration_date.strftime('%d.%m.%Y') }}
+                            {% else %}
+                            Bilinmiyor
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Bitiş Tarihi</th>
+                        <td>
+                            {% if domain.expiry_date %}
+                            {{ domain.expiry_date.strftime('%d.%m.%Y') }}
+                            {% else %}
+                            Bilinmiyor
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Durum</th>
+                        <td>{{ domain.status or 'Bilinmiyor' }}</td>
+                    </tr>
+                    <tr>
+                        <th>NS Kayıtları</th>
+                        <td>
+                            {% if domain.ns_records %}
+                            <ul class="mb-0 ps-3">
+                                {% for ns in domain.ns_records.split(',') %}
+                                <li>{{ ns.strip() }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            Bilinmiyor
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('admin_domains') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Geri
+                    </a>
+                    <div>
+                        <a href="{{ url_for('admin_domain_refresh', domain_id=domain.id) }}" class="btn btn-primary">
+                            <i class="fas fa-sync-alt me-1"></i>Bilgileri Güncelle
+                        </a>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteDomainModal">
+                            <i class="fas fa-trash-alt me-1"></i>Sil
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-server me-2"></i>DNS Kayıtları
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-3" id="dnsRecordsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="a-tab" data-bs-toggle="tab" data-bs-target="#a-records" type="button">A</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="mx-tab" data-bs-toggle="tab" data-bs-target="#mx-records" type="button">MX</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="txt-tab" data-bs-toggle="tab" data-bs-target="#txt-records" type="button">TXT</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cname-tab" data-bs-toggle="tab" data-bs-target="#cname-records" type="button">CNAME</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="dnsRecordsContent">
+                    <div class="tab-pane fade show active" id="a-records" role="tabpanel" aria-labelledby="a-tab">
+                        {% if domain.a_records %}
+                        <ul class="list-group">
+                            {% for record in domain.a_records.split(',') %}
+                            <li class="list-group-item">{{ record.strip() }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>A kaydı bulunamadı.
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="mx-records" role="tabpanel" aria-labelledby="mx-tab">
+                        {% if domain.mx_records %}
+                        <ul class="list-group">
+                            {% for record in domain.mx_records.split(',') %}
+                            <li class="list-group-item">{{ record.strip() }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>MX kaydı bulunamadı.
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="txt-records" role="tabpanel" aria-labelledby="txt-tab">
+                        {% if domain.txt_records %}
+                        <ul class="list-group">
+                            {% for record in domain.txt_records.split(',') %}
+                            <li class="list-group-item">{{ record.strip() }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>TXT kaydı bulunamadı.
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="cname-records" role="tabpanel" aria-labelledby="cname-tab">
+                        {% if domain.cname_records %}
+                        <ul class="list-group">
+                            {% for record in domain.cname_records.split(',') %}
+                            <li class="list-group-item">{{ record.strip() }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>CNAME kaydı bulunamadı.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle me-2"></i>WHOIS Bilgisi
+            </div>
+            <div class="card-body">
+                <div class="whois-info">
+                    {% if domain.whois_data %}
+                    <pre class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">{{ domain.whois_data }}</pre>
+                    {% else %}
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i>WHOIS bilgisi bulunamadı.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Domain Modal -->
+<div class="modal fade" id="deleteDomainModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Alan Adını Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Uyarı: Bu işlem geri alınamaz!
+                </div>
+                <p>{{ domain.domain_name }} alan adını silmek istediğinize emin misiniz?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form action="{{ url_for('admin_delete_domain', domain_id=domain.id) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Alan Adını Sil</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

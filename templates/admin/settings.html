@@ -1,0 +1,119 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Site Ayarları{% endblock %}
+{% block page_title %}Site Ayarları{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-cogs me-2"></i>Genel Ayarlar
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('admin_settings_update') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="site_name" class="form-label">Site Adı</label>
+                        <input type="text" class="form-control" id="site_name" name="site_name" value="{{ settings.site_name }}" required>
+                        <div class="form-text">Sitenin genel başlığını belirler.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="contact_email" class="form-label">İletişim E-posta Adresi</label>
+                        <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ settings.contact_email }}">
+                        <div class="form-text">Kullanıcıların iletişime geçebileceği e-posta adresi.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="footer_text" class="form-label">Alt Bilgi Metni</label>
+                        <textarea class="form-control" id="footer_text" name="footer_text" rows="2">{{ settings.footer_text }}</textarea>
+                        <div class="form-text">Sitenin alt kısmında görüntülenecek metin.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="maintenance_mode" name="maintenance_mode" {% if settings.maintenance_mode %}checked{% endif %}>
+                            <label class="form-check-label" for="maintenance_mode">Bakım Modu</label>
+                        </div>
+                        <div class="form-text">Etkinleştirildiğinde, normal kullanıcılar siteye erişemez ve bakım sayfasını görürler.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="maintenance_message" class="form-label">Bakım Mesajı</label>
+                        <textarea class="form-control" id="maintenance_message" name="maintenance_message" rows="3">{{ settings.maintenance_message }}</textarea>
+                        <div class="form-text">Bakım modu etkinken kullanıcılara gösterilecek mesaj.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="items_per_page" class="form-label">Sayfa Başına Öğe Sayısı</label>
+                        <input type="number" class="form-control" id="items_per_page" name="items_per_page" value="{{ settings.items_per_page }}" min="5" max="100" required>
+                        <div class="form-text">Listeleme sayfalarında sayfa başına gösterilecek öğe sayısı.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="max_whois_cache_days" class="form-label">WHOIS Önbellek Süresi (Gün)</label>
+                        <input type="number" class="form-control" id="max_whois_cache_days" name="max_whois_cache_days" value="{{ settings.max_whois_cache_days }}" min="1" max="30" required>
+                        <div class="form-text">WHOIS verilerinin ne kadar süreyle önbellekte tutulacağı.</div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h5 class="mb-3">Sisteme Giriş Ayarları</h5>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="allow_registration" name="allow_registration" {% if settings.allow_registration %}checked{% endif %}>
+                            <label class="form-check-label" for="allow_registration">Yeni Kullanıcı Kaydına İzin Ver</label>
+                        </div>
+                        <div class="form-text">Devre dışı bırakıldığında, yeni kullanıcılar kayıt olamaz.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="email_confirmation_required" name="email_confirmation_required" {% if settings.email_confirmation_required %}checked{% endif %}>
+                            <label class="form-check-label" for="email_confirmation_required">E-posta Onayı Gerekir</label>
+                        </div>
+                        <div class="form-text">Etkinleştirildiğinde, kullanıcıların hesaplarını kullanabilmeleri için e-posta adreslerini onaylamaları gerekir.</div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Ayarları Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="fas fa-server me-2"></i>Sistem Bilgileri
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width: 30%">Flask Sürümü</th>
+                        <td>{{ system_info.flask_version }}</td>
+                    </tr>
+                    <tr>
+                        <th>Python Sürümü</th>
+                        <td>{{ system_info.python_version }}</td>
+                    </tr>
+                    <tr>
+                        <th>İşletim Sistemi</th>
+                        <td>{{ system_info.os }}</td>
+                    </tr>
+                    <tr>
+                        <th>Veritabanı URI</th>
+                        <td>{{ system_info.db_uri }}</td>
+                    </tr>
+                    <tr>
+                        <th>Uygulama Son Güncellenme</th>
+                        <td>{{ system_info.app_last_modified }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

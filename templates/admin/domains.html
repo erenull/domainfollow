@@ -1,0 +1,210 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Alan Adı Yönetimi{% endblock %}
+{% block page_title %}Alan Adı Yönetimi{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-globe me-2"></i>Alan Adı Listesi</span>
+        <div class="d-flex">
+            <!-- Alan adı arama formu -->
+            <form class="d-flex me-2" method="GET" action="{{ url_for('admin_domains') }}">
+                {% if registrar_filter %}
+                <input type="hidden" name="registrar" value="{{ registrar_filter }}">
+                {% endif %}
+                <input class="form-control me-2" type="search" placeholder="Alan adı ara..." name="search" value="{{ search_query }}" aria-label="Ara">
+                <button class="btn btn-outline-primary" type="submit">Ara</button>
+            </form>
+            
+            <!-- Kayıt firması filtresi -->
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="registrarFilterBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                    {% if registrar_filter == 'empty' %}
+                        Belirtilmemiş
+                    {% elif registrar_filter %}
+                        {{ registrar_filter }}
+                    {% else %}
+                        Kayıt Firması
+                    {% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="registrarFilterBtn" style="min-width: 300px; max-height: 500px; overflow-y: auto;">
+                    <!-- Kayıt firması arama -->
+                    <li>
+                        <div class="px-3 py-2">
+                            <form class="d-flex" method="GET" action="{{ url_for('admin_domains') }}">
+                                {% if search_query %}
+                                <input type="hidden" name="search" value="{{ search_query }}">
+                                {% endif %}
+                                <input class="form-control form-control-sm me-2" type="search" placeholder="Firma ara..." 
+                                       name="registrar_search" value="{{ registrar_search }}" aria-label="Firma Ara">
+                                <button class="btn btn-sm btn-outline-primary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider m-0"></li>
+                    
+                    <!-- Tüm filtreleri temizleme seçeneği -->
+                    <li>
+                        <a class="dropdown-item {% if not registrar_filter %}active{% endif %}" 
+                           href="{{ url_for('admin_domains', search=search_query) }}">
+                            <strong>Tümü</strong>
+                        </a>
+                    </li>
+                    
+                    <!-- Kayıt firması boş olanlar için özel seçenek -->
+                    {% if empty_registrars_exist %}
+                    <li>
+                        <a class="dropdown-item {% if registrar_filter == 'empty' %}active{% endif %}" 
+                           href="{{ url_for('admin_domains', search=search_query, registrar='empty') }}">
+                            <em>Belirtilmemiş</em>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Kayıt firmaları listesi -->
+                    {% for registrar in registrars %}
+                    <li>
+                        <a class="dropdown-item {% if registrar_filter == registrar %}active{% endif %}" 
+                           href="{{ url_for('admin_domains', search=search_query, registrar=registrar) }}">
+                            {{ registrar }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    
+                    <!-- Hiç kayıt firması bulunamadığında gösterilecek mesaj -->
+                    {% if registrars|length == 0 and not empty_registrars_exist %}
+                    <li>
+                        <div class="dropdown-item text-muted">Kayıt firması bulunamadı</div>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Alan Adı</th>
+                    <th>Sahibi</th>
+                    <th>Kayıt Firması</th>
+                    <th>Eklenme Tarihi</th>
+                    <th>Bitiş Tarihi</th>
+                    <th>Durum</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for domain in domains.items %}
+                <tr>
+                    <td>{{ domain.id }}</td>
+                    <td>{{ domain.domain_name }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_user_detail', user_id=domain.user_id) }}">
+                            {{ domain.user.username }}
+                            {% if domain.user.is_admin %}
+                            <span class="badge bg-success">Admin</span>
+                            {% endif %}
+                            {% if domain.user.is_banned %}
+                            <span class="badge bg-danger">Banlı</span>
+                            {% endif %}
+                        </a>
+                    </td>
+                    <td>
+                        {% if domain.registrar %}
+                            <a href="{{ url_for('admin_domains', registrar=domain.registrar) }}">{{ domain.registrar }}</a>
+                        {% else %}
+                            <span class="text-muted"><em>Belirtilmemiş</em></span>
+                        {% endif %}
+                    </td>
+                    <td>{{ domain.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>
+                        {% if domain.expiry_date %}
+                        {{ domain.expiry_date.strftime('%d.%m.%Y') }}
+                        {% else %}
+                        <span class="text-muted">Bilinmiyor</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if domain.status %}
+                            {{ domain.status }}
+                        {% else %}
+                            <span class="text-muted">Bilinmiyor</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin_domain_detail', domain_id=domain.id) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i> Arama kriterlerine uygun alan adı bulunamadı.
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if domains.pages > 1 %}
+    <div class="card-footer">
+        <nav aria-label="Sayfalama">
+            <ul class="pagination justify-content-center m-0">
+                {% if domains.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_domains', page=domains.prev_num, search=search_query, registrar=registrar_filter) }}">
+                        &laquo; Önceki
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">&laquo; Önceki</span>
+                </li>
+                {% endif %}
+                
+                {% for page_num in domains.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == domains.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin_domains', page=page_num, search=search_query, registrar=registrar_filter) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if domains.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_domains', page=domains.next_num, search=search_query, registrar=registrar_filter) }}">
+                        Sonraki &raquo;
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Sonraki &raquo;</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

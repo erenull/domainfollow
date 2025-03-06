@@ -1,0 +1,208 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Kullanıcı Detayları{% endblock %}
+{% block page_title %}Kullanıcı Detayları: {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-user me-2"></i>Kullanıcı Bilgileri
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="avatar mb-3" style="font-size: 3rem; color: #0d6efd;">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h4>{{ user.username }}</h4>
+                    {% if user.is_admin %}
+                    <span class="badge bg-success">Admin</span>
+                    {% endif %}
+                    {% if user.is_banned %}
+                    <span class="badge bg-danger">Banlı</span>
+                    {% endif %}
+                </div>
+                
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Kullanıcı ID</th>
+                        <td>{{ user.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>E-posta</th>
+                        <td>{{ user.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Kayıt Tarihi</th>
+                        <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Son Giriş</th>
+                        <td>
+                            {% if user.last_login %}
+                            {{ user.last_login.strftime('%d.%m.%Y %H:%M') }}
+                            {% else %}
+                            Hiç giriş yapmadı
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Alan Adı Sayısı</th>
+                        <td>{{ domains|length }}</td>
+                    </tr>
+                    {% if user.is_banned and user.ban_reason %}
+                    <tr>
+                        <th>Ban Sebebi</th>
+                        <td>{{ user.ban_reason }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Geri
+                    </a>
+                    <div>
+                        {% if user.id != current_user.id %}
+                            {% if user.is_banned %}
+                            <form action="{{ url_for('admin_toggle_user_ban', user_id=user.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-user-check me-1"></i>Banı Kaldır
+                                </button>
+                            </form>
+                            {% else %}
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#banUserModal">
+                                <i class="fas fa-user-slash me-1"></i>Banla
+                            </button>
+                            {% endif %}
+                            
+                            {% if user.is_admin %}
+                            <form action="{{ url_for('admin_toggle_user_admin', user_id=user.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-info">
+                                    <i class="fas fa-user me-1"></i>Admin Yetkisini Kaldır
+                                </button>
+                            </form>
+                            {% else %}
+                            <form action="{{ url_for('admin_toggle_user_admin', user_id=user.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-user-shield me-1"></i>Admin Yap
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
+                                <i class="fas fa-trash-alt me-1"></i>Sil
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-globe me-2"></i>Kullanıcının Alan Adları
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Alan Adı</th>
+                            <th>Kayıt Firması</th>
+                            <th>Kayıt Tarihi</th>
+                            <th>Bitiş Tarihi</th>
+                            <th>Durum</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for domain in domains %}
+                        <tr>
+                            <td>{{ domain.domain_name }}</td>
+                            <td>{{ domain.registrar or 'Bilinmiyor' }}</td>
+                            <td>
+                                {% if domain.registration_date %}
+                                {{ domain.registration_date.strftime('%d.%m.%Y') }}
+                                {% else %}
+                                Bilinmiyor
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if domain.expiry_date %}
+                                {{ domain.expiry_date.strftime('%d.%m.%Y') }}
+                                {% else %}
+                                Bilinmiyor
+                                {% endif %}
+                            </td>
+                            <td>{{ domain.status or 'Bilinmiyor' }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_domain_detail', domain_id=domain.id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">Bu kullanıcının hiç alan adı yok.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ban User Modal -->
+<div class="modal fade" id="banUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('admin_toggle_user_ban', user_id=user.id) }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Kullanıcıyı Banla</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ user.username }} kullanıcısını banlamak istediğinize emin misiniz?</p>
+                    <div class="mb-3">
+                        <label for="ban_reason" class="form-label">Ban Sebebi</label>
+                        <textarea class="form-control" id="ban_reason" name="ban_reason" rows="3" placeholder="Ban sebebini yazın" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-danger">Kullanıcıyı Banla</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Kullanıcıyı Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Uyarı: Bu işlem geri alınamaz!
+                </div>
+                <p>{{ user.username }} kullanıcısını ve bu kullanıcıya ait <strong>tüm alan adlarını</strong> silmek istediğinize emin misiniz?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Kullanıcıyı Sil</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

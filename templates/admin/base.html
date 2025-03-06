@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Paneli{% endblock %} - {{ settings.site_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js için gerekli kütüphane -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .admin-sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #212529;
+        }
+        .sidebar-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.7rem 1rem;
+            display: block;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-link:hover, .sidebar-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: #0d6efd;
+        }
+        .content-area {
+            padding: 20px;
+            flex-grow: 1;
+        }
+        .stats-card {
+            background: linear-gradient(to right, #0062E6, #33AEFF);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+        }
+        .card {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            border: none;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: rgba(0, 0, 0, 0.02);
+            font-weight: 600;
+        }
+        .badge-admin {
+            background-color: #198754;
+            color: white;
+        }
+        .badge-banned {
+            background-color: #dc3545;
+            color: white;
+        }
+        .admin-title {
+            border-left: 4px solid #0d6efd;
+            padding-left: 10px;
+        }
+        .maintenance-alert {
+            background-color: #fff3cd;
+            border-color: #ffecb5;
+            color: #664d03;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">
+                <i class="fas fa-shield-alt me-2"></i>{{ settings.site_name }} - Admin
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarAdmin">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}" target="_blank">
+                            <i class="fas fa-external-link-alt me-1"></i>Siteyi Görüntüle
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-shield me-1"></i>{{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Çıkış Yap</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <div class="col-md-2 admin-sidebar">
+                <div class="pt-3">
+                    <div class="px-3 mb-3 text-white-50 small">
+                        <i class="fas fa-tachometer-alt me-1"></i>YÖNETİM PANELİ
+                    </div>
+                    <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                        <i class="fas fa-home me-2"></i>Ana Sayfa
+                    </a>
+                    <a href="{{ url_for('admin_users') }}" class="sidebar-link {% if 'admin_users' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-users me-2"></i>Kullanıcılar
+                    </a>
+                    <a href="{{ url_for('admin_domains') }}" class="sidebar-link {% if 'admin_domains' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-globe me-2"></i>Alan Adları
+                    </a>
+                    <a href="{{ url_for('admin_settings') }}" class="sidebar-link {% if request.endpoint == 'admin_settings' %}active{% endif %}">
+                        <i class="fas fa-cogs me-2"></i>Site Ayarları
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-10 content-area bg-light">
+                {% if settings.maintenance_mode %}
+                <div class="maintenance-alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i><strong>Dikkat!</strong> Site şu anda bakım modunda. Normal kullanıcılar erişemiyor.
+                </div>
+                {% endif %}
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <div class="mb-4">
+                    <h2 class="admin-title">{% block page_title %}Admin Panel{% endblock %}</h2>
+                </div>
+                
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

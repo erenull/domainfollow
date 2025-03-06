@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+
+{% block title %}Toplu Alan Adı Ekle - Alan Adı Takip Sistemi{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-plus me-2"></i>Toplu Alan Adı Ekle</h4>
+            </div>
+            <div class="card-body">
+                <form id="bulkAddForm" method="POST" action="{{ url_for('bulk_add_domain') }}">
+                    <div class="mb-3">
+                        <label for="domain_list" class="form-label">Alan Adları Listesi</label>
+                        <textarea class="form-control" id="domain_list" name="domain_list" rows="8" placeholder="Her satıra bir alan adı girin (örn: ornek.com)" required></textarea>
+                        <div class="form-text">Her satıra bir alan adı yazın. Alan adlarını uzantılarıyla birlikte girin (örn: ornek.com, ornek.com.tr)</div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="skipDuplicates" name="skipDuplicates" checked>
+                        <label class="form-check-label" for="skipDuplicates">Tekrarlanan alan adlarını atla</label>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="cleanDomains" name="cleanDomains" checked>
+                        <label class="form-check-label" for="cleanDomains">Alan adlarını otomatik temizle (http://, www. gibi önekleri kaldır)</label>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" id="submitButton" class="btn btn-primary">Alan Adlarını Ekle</button>
+                        <button type="button" id="validateButton" class="btn btn-outline-secondary">Doğrula</button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">İptal</a>
+                    </div>
+                </form>
+
+                <div id="validationResults" class="mt-4 d-none">
+                    <h5>Doğrulama Sonuçları</h5>
+                    <div class="alert alert-info">
+                        <p><strong>Toplam:</strong> <span id="totalDomains">0</span> domain</p>
+                        <p><strong>Geçerli:</strong> <span id="validDomains">0</span> domain</p>
+                        <p><strong>Geçersiz:</strong> <span id="invalidDomains">0</span> domain</p>
+                    </div>
+                    <div id="invalidDomainsList" class="d-none">
+                        <h6>Geçersiz Alan Adları:</h6>
+                        <ul id="invalidList" class="list-group"></ul>
+                    </div>
+                </div>
+
+                <div id="progressContainer" class="mt-4 d-none">
+                    <h5>İşlem Durumu</h5>
+                    <div class="progress mb-3">
+                        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div id="statusMessages" class="alert alert-info">
+                        <p id="currentOperation">İşlem başlatılıyor...</p>
+                        <p><strong>İşlenen:</strong> <span id="processedCount">0</span>/<span id="totalCount">0</span></p>
+                        <p><strong>Başarılı:</strong> <span id="successCount">0</span></p>
+                        <p><strong>Başarısız:</strong> <span id="errorCount">0</span></p>
+                    </div>
+                    <div id="resultContainer" class="mt-3">
+                        <h6>Sonuçlar:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Alan Adı</th>
+                                        <th>Durum</th>
+                                        <th>Sonuç</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('bulkAddForm');
+        const submitButton = document.getElementById('submitButton');
+        const validateButton = document.getElementById('validateButton');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const currentOperation = document.getElementById('currentOperation');
+        const resultTable = document.getElementById('resultTable');
+        const processedCount = document.getElementById('processedCount');
+        const totalCount = document.getElementById('totalCount');
+        const successCount = document.getElementById('successCount');
+        const errorCount = document.getElementById('errorCount');
+        const validationResults = document.getElementById('validationResults');
+        const totalDomains = document.getElementById('totalDomains');
+        const validDomains = document.getElementById('validDomains');
+        const invalidDomains = document.getElementById('invalidDomains');
+        const invalidDomainsList = document.getElementById('invalidDomainsList');
+        const invalidList = document.getElementById('invalidList');
+        
+        // Domain validation function
+        function validateDomainFormat(domain) {
+            // Basic validation
+            if (!domain || domain.trim() === '') return false;
+            
+            // Remove http://, https://, www. prefixes
+            let cleaned = domain.toLowerCase().trim();
+            ['http://', 'https://', 'www.'].forEach(prefix => {
+                if (cleaned.startsWith(prefix)) {
+                    cleaned = cleaned.substring(prefix.length);
+                }
+            });
+            
+            // Remove any paths or query parameters
+            cleaned = cleaned.split('/')[0].split('?')[0].split('#')[0];
+            
+            // Basic domain format validation
+            const domainPattern = /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+            return domainPattern.test(cleaned) ? cleaned : false;
+        }
+        
+        // Clean domain function
+        function cleanDomain(domain) {
+            if (!domain || domain.trim() === '') return '';
+            
+            // Remove http://, https://, www. prefixes
+            let cleaned = domain.toLowerCase().trim();
+            ['http://', 'https://', 'www.'].forEach(prefix => {
+                if (cleaned.startsWith(prefix)) {
+                    cleaned = cleaned.substring(prefix.length);
+                }
+            });
+            
+            // Remove any paths or query parameters
+            cleaned = cleaned.split('/')[0].split('?')[0].split('#')[0];
+            
+            return cleaned;
+        }
+        
+        // Validate button handler
+        validateButton.addEventListener('click', function() {
+            const domainListText = document.getElementById('domain_list').value;
+            const shouldClean = document.getElementById('cleanDomains').checked;
+            
+            let domains = domainListText.split('\n')
+                .map(domain => domain.trim())
+                .filter(domain => domain.length > 0);
+            
+            if (domains.length === 0) {
+                alert('Lütfen en az bir alan adı girin.');
+                return;
+            }
+            
+            let valid = 0;
+            let invalid = 0;
+            let invalidDomains = [];
+            
+            // Clear previous results
+            invalidList.innerHTML = '';
+            
+            domains.forEach(domain => {
+                const originalDomain = domain;
+                if (shouldClean) {
+                    domain = cleanDomain(domain);
+                }
+                
+                const isValid = validateDomainFormat(domain);
+                if (isValid) {
+                    valid++;
+                } else {
+                    invalid++;
+                    invalidDomains.push(originalDomain);
+                    
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item list-group-item-danger';
+                    listItem.textContent = originalDomain;
+                    invalidList.appendChild(listItem);
+                }
+            });
+            
+            // Update validation results
+            totalDomains.textContent = domains.length;
+            validDomains.textContent = valid;
+            invalidDomains.textContent = invalid;
+            
+            // Show validation results
+            validationResults.classList.remove('d-none');
+            if (invalid > 0) {
+                invalidDomainsList.classList.remove('d-none');
+            } else {
+                invalidDomainsList.classList.add('d-none');
+            }
+        });
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Hide validation results if shown
+            validationResults.classList.add('d-none');
+            
+            // Show progress container
+            progressContainer.classList.remove('d-none');
+            
+            // Clear previous results
+            resultTable.innerHTML = '';
+            
+            // Disable submit button
+            submitButton.disabled = true;
+            validateButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> İşlem sürüyor...';
+            
+            // Get form options
+            const skipDuplicates = document.getElementById('skipDuplicates').checked;
+            const shouldClean = document.getElementById('cleanDomains').checked;
+            
+            // Get the domain list
+            const domainListText = document.getElementById('domain_list').value;
+            let domains = domainListText.split('\n')
+                .map(domain => domain.trim())
+                .filter(domain => domain.length > 0);
+            
+            if (domains.length === 0) {
+                currentOperation.textContent = 'Lütfen en az bir alan adı girin.';
+                submitButton.disabled = false;
+                validateButton.disabled = false;
+                submitButton.innerHTML = 'Alan Adlarını Ekle';
+                return;
+            }
+            
+            // Clean domains if option selected
+            if (shouldClean) {
+                domains = domains.map(domain => cleanDomain(domain));
+            }
+            
+            // Remove duplicates if option selected
+            if (skipDuplicates) {
+                domains = [...new Set(domains)];
+            }
+            
+            // Initialize counts
+            let processed = 0;
+            let successes = 0;
+            let errors = 0;
+            const total = domains.length;
+            
+            // Update counts display
+            processedCount.textContent = processed;
+            totalCount.textContent = total;
+            successCount.textContent = successes;
+            errorCount.textContent = errors;
+            
+            // Process domains one by one
+            processDomains(domains, processed, total, successes, errors);
+        });
+        
+        function processDomains(domains, processed, total, successes, errors) {
+            if (processed >= total) {
+                // All domains processed
+                finishProcess(successes, errors);
+                return;
+            }
+            
+            const domain = domains[processed];
+            
+            // Update UI
+            const percentComplete = Math.round((processed / total) * 100);
+            progressBar.style.width = percentComplete + '%';
+            progressBar.setAttribute('aria-valuenow', percentComplete);
+            currentOperation.textContent = `İşleniyor: ${domain} (${processed+1}/${total})`;
+            
+            // Add row for this domain
+            const row = document.createElement('tr');
+            const domainCell = document.createElement('td');
+            domainCell.textContent = domain;
+            
+            const statusCell = document.createElement('td');
+            statusCell.innerHTML = '<span class="badge bg-info">İşleniyor</span>';
+            
+            const resultCell = document.createElement('td');
+            resultCell.textContent = '-';
+            
+            row.appendChild(domainCell);
+            row.appendChild(statusCell);
+            row.appendChild(resultCell);
+            resultTable.appendChild(row);
+            
+            // Scroll to show latest entry
+            row.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            
+            // Send the add request
+            fetch('/add_domain_api', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ domain_name: domain })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update row with result
+                if (data.success) {
+                    statusCell.innerHTML = '<span class="badge bg-success">Başarılı</span>';
+                    successes++;
+                    successCount.textContent = successes;
+                } else {
+                    statusCell.innerHTML = '<span class="badge bg-danger">Başarısız</span>';
+                    errors++;
+                    errorCount.textContent = errors;
+                }
+                
+                resultCell.textContent = data.message;
+                
+                // Process next domain
+                processed++;
+                processedCount.textContent = processed;
+                
+                // Add slight delay to prevent overwhelming the server and allow UI updates
+                setTimeout(() => processDomains(domains, processed, total, successes, errors), 300);
+            })
+            .catch(error => {
+                // Handle error
+                statusCell.innerHTML = '<span class="badge bg-danger">Hata</span>';
+                resultCell.textContent = 'Bağlantı hatası: ' + error.message;
+                
+                errors++;
+                errorCount.textContent = errors;
+                
+                // Process next domain
+                processed++;
+                processedCount.textContent = processed;
+                
+                // Add slight delay
+                setTimeout(() => processDomains(domains, processed, total, successes, errors), 300);
+            });
+        }
+        
+        function finishProcess(successes, errors) {
+            progressBar.style.width = '100%';
+            progressBar.setAttribute('aria-valuenow', 100);
+            
+            if (errors === 0 && successes > 0) {
+                progressBar.classList.remove('bg-info');
+                progressBar.classList.add('bg-success');
+                currentOperation.textContent = 'İşlem başarıyla tamamlandı!';
+            } else if (successes === 0) {
+                progressBar.classList.remove('bg-info');
+                progressBar.classList.add('bg-danger');
+                currentOperation.textContent = 'İşlem başarısız!';
+            } else {
+                progressBar.classList.remove('bg-info');
+                progressBar.classList.add('bg-warning');
+                currentOperation.textContent = 'İşlem kısmen tamamlandı!';
+            }
+            
+            submitButton.disabled = false;
+            validateButton.disabled = false;
+            submitButton.innerHTML = 'Alan Adlarını Ekle';
+            
+            // Add a "Return to Dashboard" button
+            const returnButton = document.createElement('a');
+            returnButton.href = "{{ url_for('dashboard') }}";
+            returnButton.className = 'btn btn-success mt-3 me-2';
+            returnButton.textContent = 'Panele Dön';
+            
+            // Add a "Try Again" button
+            const tryAgainButton = document.createElement('button');
+            tryAgainButton.type = 'button';
+            tryAgainButton.className = 'btn btn-primary mt-3';
+            tryAgainButton.textContent = 'Tekrar Dene';
+            tryAgainButton.addEventListener('click', function() {
+                window.location.reload();
+            });
+            
+            document.getElementById('resultContainer').appendChild(returnButton);
+            document.getElementById('resultContainer').appendChild(tryAgainButton);
+        }
+    });
+</script>
+{% endblock %}

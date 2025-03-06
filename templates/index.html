@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+
+{% block title %}Ana Sayfa - Alan Adı Takip Sistemi{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="container-fluid bg-gradient-primary text-white py-5" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <h1 class="display-3 fw-bold mb-4 animate__animated animate__fadeInUp">Alan Adı Takip Sistemi</h1>
+                <p class="lead fs-4 mb-4 animate__animated animate__fadeInUp animate__delay-1s">
+                    Tüm alan adlarınızı tek bir platformda profesyonelce yönetin ve takip edin.
+                </p>
+                <div class="animate__animated animate__fadeInUp animate__delay-2s">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg px-4 me-3 shadow-sm">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard'a Git
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-4 me-3 shadow-sm">
+                        <i class="fas fa-user-plus me-2"></i>Hemen Başla
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 text-center animate__animated animate__fadeInRight">
+                <img src="{{ url_for('static', filename='img/hero-illustration.svg') }}" alt="Alan Adı Takibi" class="img-fluid" style="max-height: 400px;" onerror="this.onerror=null; this.src='https://placehold.co/600x400/224abe/FFFFFF/svg?text=Alan+Adları+Takip&font=Montserrat'">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Öne Çıkan İstatistikler -->
+<div class="container py-5">
+    <div class="row text-center">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100 py-4">
+                <div class="card-body">
+                    <div class="display-4 text-primary mb-3">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="counter fw-bold">100%</h3>
+                    <p class="text-muted">Gerçek Zamanlı Veri</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100 py-4">
+                <div class="card-body">
+                    <div class="display-4 text-primary mb-3">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="counter fw-bold">100%</h3>
+                    <p class="text-muted">Güvenli Takip</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100 py-4">
+                <div class="card-body">
+                    <div class="display-4 text-primary mb-3">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3 class="counter fw-bold">7/24</h3>
+                    <p class="text-muted">Alan Adı Takibi</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Özellikler -->
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">Neler Sunuyoruz?</h2>
+        <p class="lead text-muted">Sistemimiz ile alan adlarınızı eksiksiz takip edin</p>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 hover-card">
+                <div class="card-body text-center p-4">
+                    <div class="icon-circle bg-primary-light text-primary mx-auto mb-4">
+                        <i class="fas fa-globe fa-2x"></i>
+                    </div>
+                    <h4 class="card-title fw-bold">Alan Adı Yönetimi</h4>
+                    <p class="card-text text-muted">Tüm alan adlarınızı tek bir yerden yönetin, detaylı bilgilerine anında erişin.</p>
+                    <ul class="list-unstyled text-start">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Whois bilgileri</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> DNS kayıtları</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Kayıt, bitiş tarihleri</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 hover-card">
+                <div class="card-body text-center p-4">
+                    <div class="icon-circle bg-primary-light text-primary mx-auto mb-4">
+                        <i class="fas fa-calendar-alt fa-2x"></i>
+                    </div>
+                    <h4 class="card-title fw-bold">Akıllı Hatırlatıcılar</h4>
+                    <p class="card-text text-muted">Alan adı sürelerinin dolmasını asla kaçırmayın, zamanında haberdar olun.</p>
+                    <ul class="list-unstyled text-start">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Yaklaşan bitiş tarihleri</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Kritik durumlar için uyarılar</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Kalan gün sayıları</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 hover-card">
+                <div class="card-body text-center p-4">
+                    <div class="icon-circle bg-primary-light text-primary mx-auto mb-4">
+                        <i class="fas fa-filter fa-2x"></i>
+                    </div>
+                    <h4 class="card-title fw-bold">Güçlü Filtreleme</h4>
+                    <p class="card-text text-muted">Gelişmiş filtreleme ve sıralama özellikleriyle istediğiniz bilgiye hızlıca ulaşın.</p>
+                    <ul class="list-unstyled text-start">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Kayıt firmasına göre filtreleme</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Duruma göre filtreleme</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Çoklu kritere göre sıralama</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Nasıl Çalışır -->
+<div class="container-fluid bg-light py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Nasıl Çalışır?</h2>
+            <p class="lead text-muted">Alan adlarınızı takip etmek bu kadar kolay</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <div class="card border-0 shadow-sm h-100 text-center">
+                    <div class="card-body p-4">
+                        <div class="step-circle bg-primary text-white mx-auto mb-3">1</div>
+                        <h5 class="fw-bold">Hesap Oluşturun</h5>
+                        <p class="text-muted">Hızlıca ücretsiz bir hesap oluşturarak başlayın.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <div class="card border-0 shadow-sm h-100 text-center">
+                    <div class="card-body p-4">
+                        <div class="step-circle bg-primary text-white mx-auto mb-3">2</div>
+                        <h5 class="fw-bold">Alan Adlarını Ekleyin</h5>
+                        <p class="text-muted">Alan adlarınızı sisteme ekleyin ve bilgilerini otomatik alın.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                <div class="card border-0 shadow-sm h-100 text-center">
+                    <div class="card-body p-4">
+                        <div class="step-circle bg-primary text-white mx-auto mb-3">3</div>
+                        <h5 class="fw-bold">Takip Edin</h5>
+                        <p class="text-muted">Dashboard'dan tüm alan adlarınızı kolayca takip edin.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card border-0 shadow-sm h-100 text-center">
+                    <div class="card-body p-4">
+                        <div class="step-circle bg-primary text-white mx-auto mb-3">4</div>
+                        <h5 class="fw-bold">Bildirimler Alın</h5>
+                        <p class="text-muted">Süresi dolan alan adları için otomatik hatırlatmalar alın.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sık Sorulan Sorular -->
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">Sık Sorulan Sorular</h2>
+        <p class="lead text-muted">Merak ettiklerinize hızlı cevaplar</p>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="accordion shadow-sm" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqOne">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            Alan adlarımı nasıl ekleyebilirim?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="faqOne" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Dashboard'a giriş yaptıktan sonra "Yeni Alan Adı Ekle" butonuna tıklayarak alan adı ekleme formunu doldurabilirsiniz. Alan adını girdiğinizde sistem otomatik olarak Whois bilgilerini çekecektir.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqTwo">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            Alan adlarını nasıl filtreleyebilirim?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Dashboard sayfasında üst kısımda bulunan filtreleme aracını kullanarak alan adlarınızı kayıt firması, durum ve diğer özelliklere göre filtreleyebilirsiniz. Ayrıca çeşitli kriterlere göre sıralama yapabilirsiniz.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqThree">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            Sistemde hangi bilgiler gösteriliyor?
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Alan adlarınız için Whois bilgileri, kayıt ve bitiş tarihleri, kayıt firma bilgileri, DNS kayıtları (A, NS, MX, TXT) ve kalan gün sayısı gibi kritik bilgiler sunulmaktadır.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA -->
+<div class="container-fluid bg-gradient-primary text-white py-5" style="background: linear-gradient(135deg, #224abe 0%, #4e73df 100%);">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mb-4 mb-lg-0">
+                <h2 class="fw-bold mb-3">Alan adlarınızı profesyonelce yönetmeye başlayın!</h2>
+                <p class="lead mb-0">Hemen ücretsiz hesap oluşturun ve alan adlarınızı tek bir yerden takip edin.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg px-4 shadow-sm">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard'a Git
+                </a>
+                {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-4 shadow-sm">
+                    <i class="fas fa-user-plus me-2"></i>Hemen Başla
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .bg-primary-light {
+        background-color: rgba(78, 115, 223, 0.1);
+    }
+    
+    .icon-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .step-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    .hover-card {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-card:hover {
+        transform: translateY(-10px);
+    }
+    
+    /* Animate.css minimal */
+    .animate__animated {
+        animation-duration: 1s;
+        animation-fill-mode: both;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 40px, 0);
+        }
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+    
+    .animate__fadeInUp {
+        animation-name: fadeInUp;
+    }
+    
+    @keyframes fadeInRight {
+        from {
+            opacity: 0;
+            transform: translate3d(100px, 0, 0);
+        }
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+    
+    .animate__fadeInRight {
+        animation-name: fadeInRight;
+    }
+    
+    .animate__delay-1s {
+        animation-delay: 0.3s;
+    }
+    
+    .animate__delay-2s {
+        animation-delay: 0.6s;
+    }
+</style>
+{% endblock %}
